@@ -242,30 +242,35 @@ Sub startParseTable()
                     Set myParagraphs = celTable.Range.Paragraphs
                     If rowTable.Cells.Count = 1 Then
                     
-                        ' Парсим название раздела
+                        ' Ïàðñèì íàçâàíèå ðàçäåëà
 '                        Set myParagraphs = celTable.Range.Paragraphs
                         If myParagraphs(1).Range.Words(1).Characters(1).Font.Bold = -1 And myParagraphs(1).Range.Words(1).Characters(1).Font.Size = 12 Then
                             sortingTitle = sortingTitle + 1000
-                            sortingQuestion = sortingTitle + 50
+                            
+                            If sortingQuestion > sortingTitle Then
+                                sortingTitle = (sortingQuestion \ 1000 + 1) * 1000
+                                
+                            End If
+                            sortingQuestion = sortingTitle + 100
                             testMyString = chapterParseFunction(id, sortingTitle, myParagraph)
                             i = LBound(data) + UBound(data)
                             ReDim Preserve data(i + 1)
                             data(i + 1) = testMyString
-                            Debug.Print testMyString, indexCell
+'                            Debug.Print testMyString, indexCell
 
                         End If
                     Else
                         If indexCell > 1 Then
-                            ' Парсим вопрос
+                            ' Ïàðñèì âîïðîñ
                             If indexCell = 2 Then
-                                sortingQuestion = sortingQuestion + 50
-                                testMyString = questionParseFunction(id, sortingQuestion, myParagraph, myParagraphs)
+                                sortingQuestion = sortingQuestion + 100
+                                testMyString = questionParseFunction(id, sortingQuestion, myParagraph, myParagraphs, rowTable)
                                 i = LBound(data) + UBound(data)
                                 ReDim Preserve data(i + 1)
                                 data(i + 1) = testMyString
                             End If
                             
-                            ' Парсим ответ
+                            ' Ïàðñèì îòâåò
                             If indexCell = 3 Then
 '                                sortingQuestion = sortingQuestion + 50
                                 testMyString = answerParseFunction(id, 8, myParagraph)
@@ -288,11 +293,11 @@ Sub startParseTable()
     
     i = LBound(data) + UBound(data)
     
-    Debug.Print "Ðàçìåð ìàññèâà = ", i + 1, data(1)
+'    Debug.Print "Ðàçìåð ìàññèâà = ", i + 1, data(1)
     
     For ii = 0 To i
         data(ii) = CStr(ii) + data(ii)
-        Debug.Print ii, data(ii)
+'        Debug.Print ii, data(ii)
     Next ii
     
     Call writeToFile(data)
@@ -312,7 +317,7 @@ Sub chapterParse(id As Long, sorting As Long, myParagraph As Paragraph)
 '    myString = myText
 
     myString = CStr(id) + "title" + ";" + CStr(sorting) + ";" + myText
-    Debug.Print myString
+'    Debug.Print myString
 
 End Sub
 
@@ -326,11 +331,11 @@ Function chapterParseFunction(id As Long, sorting As Long, myParagraph As String
     myText = Replace(myText, "..", ".")
     
 '    chapterParseFunction = CStr(id) + ";" + "title" + ";" + CStr(sorting) + ";" + myText + ";" + "null"
-    chapterParseFunction = ";" + "title" + ";" + CStr(sorting) + ";" + myText + ";" + "null"
+    chapterParseFunction = ";" + "title" + ";" + CStr(sorting) + ";" + myText + ";" + "null" + ";" + "No" + ";" + "NoRelation"
 
 End Function
 
-Function questionParseFunction(id As Long, sorting As Long, myParagraph As String, myParagraphs) As String
+Function questionParseFunction(id As Long, sorting1 As Long, myParagraph As String, myParagraphs, currentRow As Row) As String
     Dim myString As String, myText As String
     Dim describe As String
     Dim indexParagraph As Integer
@@ -338,10 +343,25 @@ Function questionParseFunction(id As Long, sorting As Long, myParagraph As Strin
     describe = ""
     myText = ""
     indexParagraph = 1
+    subQuestion = "No"
+    relationSubQuestion = "NoRelation"
+    indicatorSubQuestion = currentRow.Cells(1).Range.Text
+    indicatorSubQuestion = Replace(Replace(indicatorSubQuestion, Chr(10), ""), Chr(13), "")
+    indicatorSubQuestion = Left(indicatorSubQuestion, Len(indicatorSubQuestion) - 1)
+'    indicatorSubQuestion = Left(indicatorSubQuestion, 1)
+'    Debug.Print indicatorSubQuestion
+    If indicatorSubQuestion = "" Then
+        Debug.Print sorting1
+        subQuestion = "Yes"
+        sorting1 = sorting1 - 100 + 20
+        relationSubQuestion = sorting1 - 20
+    End If
+'    Debug.Print sorting1
+'    Debug.Print indicatorSubQuestion
 '    Debug.Print myParagraphs.Count
     
     For Each mySentence In myParagraphs
-        Debug.Print indexParagraph, mySentence.Range.Words(1).HighlightColorIndex
+'        Debug.Print indexParagraph, mySentence.Range.Words(1).HighlightColorIndex
         If indexParagraph = myParagraphs.Count And mySentence.Range.Words(1).HighlightColorIndex = 3 Then
             describe = mySentence.Range.Text
         Else
@@ -350,7 +370,7 @@ Function questionParseFunction(id As Long, sorting As Long, myParagraph As Strin
 
         indexParagraph = indexParagraph + 1
     Next mySentence
-    If describe = "" Then describe = "null"
+'    If describe = "" Then describe = "null"
 '    myText = myParagraph.Range.Text
 '    myText = myParagraph
     
@@ -358,12 +378,17 @@ Function questionParseFunction(id As Long, sorting As Long, myParagraph As Strin
     myText = Left(myText, Len(myText) - 1)
     myText = Replace(myText, "..", ".")
     
-    describe = Replace(Replace(describe, Chr(10), ""), Chr(13), ". ")
-    describe = Left(describe, Len(describe) - 1)
-    describe = Replace(describe, "..", ".")
+    If describe <> "" Then
+        describe = Replace(Replace(describe, Chr(10), ""), Chr(13), ". ")
+        describe = Left(describe, Len(describe) - 1)
+        describe = Replace(describe, "..", ".")
+    End If
+    
+    If describe = "" Then describe = "null"
 
     
-    questionParseFunction = ";" + "question" + ";" + CStr(sorting) + ";" + myText + ";" + describe
+    questionParseFunction = ";" + "question" + ";" + CStr(sorting1) + ";" + myText + ";" + describe + ";" + subQuestion + ";" + CStr(relationSubQuestion)
+    If indicatorSubQuestion = "" Then sorting1 = sorting1 - 20
 
 End Function
 
@@ -376,12 +401,15 @@ Function answerParseFunction(id As Long, sorting As Long, myParagraph As String)
     myText = Left(myText, Len(myText) - 1)
     myText = Replace(myText, "..", ".")
     
-    answerParseFunction = ";" + "answer" + ";" + CStr(sorting) + ";" + myText + ";" + "null"
+    answerParseFunction = ";" + "answer" + ";" + CStr(sorting) + ";" + myText + ";" + "null" + ";" + "No" + ";" + "NoRelation"
 
 End Function
 
 Sub testFill()
+    Dim MyResult As Long
     Debug.Print ActiveDocument.Tables(1).Rows(1).Range.Paragraphs(1).Range.Words(1).HighlightColorIndex
+    MyResult = (3200 \ 1000 + 1) * 1000
+    Debug.Print MyResult
 End Sub
 
 Sub writeToFile(data As Variant)
