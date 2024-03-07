@@ -247,7 +247,7 @@ Sub startParseTable()
                         If myParagraphs(1).Range.Words(1).Characters(1).Font.Bold = -1 And myParagraphs(1).Range.Words(1).Characters(1).Font.Size = 12 Then
                             sortingTitle = sortingTitle + 1000
                             
-                            If sortingQuestion > sortingTitle Then
+                            If sortingQuestion >= sortingTitle Then
                                 sortingTitle = (sortingQuestion \ 1000 + 1) * 1000
                                 
                             End If
@@ -331,7 +331,7 @@ Function chapterParseFunction(id As Long, sorting As Long, myParagraph As String
     myText = Replace(myText, "..", ".")
     
 '    chapterParseFunction = CStr(id) + ";" + "title" + ";" + CStr(sorting) + ";" + myText + ";" + "null"
-    chapterParseFunction = ";" + "title" + ";" + CStr(sorting) + ";" + myText + ";" + "null" + ";" + "No" + ";" + "NoRelation"
+    chapterParseFunction = ";" + "title" + ";" + CStr(sorting) + ";" + myText + ";" + "null" + ";" + "No" + ";" + "NoRelation" + ";" + "Null"
 
 End Function
 
@@ -344,10 +344,16 @@ Function questionParseFunction(id As Long, sorting1 As Long, myParagraph As Stri
     myText = ""
     indexParagraph = 1
     subQuestion = "No"
+    maxScore = "0"
     relationSubQuestion = "NoRelation"
     indicatorSubQuestion = currentRow.Cells(1).Range.Text
     indicatorSubQuestion = Replace(Replace(indicatorSubQuestion, Chr(10), ""), Chr(13), "")
     indicatorSubQuestion = Left(indicatorSubQuestion, Len(indicatorSubQuestion) - 1)
+    If currentRow.Cells.Count = 4 Then
+        maxScore = currentRow.Cells(4).Range.Text
+        maxScore = Replace(Replace(maxScore, Chr(10), ""), Chr(13), "")
+        maxScore = Left(maxScore, Len(maxScore) - 1)
+    End If
 '    indicatorSubQuestion = Left(indicatorSubQuestion, 1)
 '    Debug.Print indicatorSubQuestion
     If indicatorSubQuestion = "" Then
@@ -387,7 +393,7 @@ Function questionParseFunction(id As Long, sorting1 As Long, myParagraph As Stri
     If describe = "" Then describe = "null"
 
     
-    questionParseFunction = ";" + "question" + ";" + CStr(sorting1) + ";" + myText + ";" + describe + ";" + subQuestion + ";" + CStr(relationSubQuestion)
+    questionParseFunction = ";" + "question" + ";" + CStr(sorting1) + ";" + myText + ";" + describe + ";" + subQuestion + ";" + CStr(relationSubQuestion) + ";" + CStr(maxScore)
     If indicatorSubQuestion = "" Then sorting1 = sorting1 - 20
 
 End Function
@@ -401,7 +407,7 @@ Function answerParseFunction(id As Long, sorting As Long, myParagraph As String)
     myText = Left(myText, Len(myText) - 1)
     myText = Replace(myText, "..", ".")
     
-    answerParseFunction = ";" + "answer" + ";" + CStr(sorting) + ";" + myText + ";" + "null" + ";" + "No" + ";" + "NoRelation"
+    answerParseFunction = ";" + "answer" + ";" + CStr(sorting) + ";" + myText + ";" + "null" + ";" + "No" + ";" + "NoRelation" + ";" + "Null"
 
 End Function
 
@@ -415,7 +421,7 @@ End Sub
 Sub writeToFile(data As Variant)
 
     i = LBound(data) + UBound(data)
-    Open "C:\Users\Abdyushev.R\Documents\VB_word\parse_table\test.txt" For Output As #1
+    Open "C:\Users\Abdyushev.R\Documents\VB_word\parse_table\wordData.txt" For Output As #1
         For ii = 0 To i
             Write #1, data(ii)
             
