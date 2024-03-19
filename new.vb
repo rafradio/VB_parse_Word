@@ -1,7 +1,8 @@
 
-Sub Test2()
+Sub paragraphTest()
 
     Dim strDocName As String
+    Dim y As String
     Dim x As String
     Dim x1 As String
     Dim x2 As String
@@ -9,6 +10,11 @@ Sub Test2()
     strDocName = ActiveDocument.Name
 '    Set myRange = ActiveDocument.Content
 '    Set aRange = ActiveDocument.Paragraphs(1).Style
+    Set myCell = ActiveDocument.Tables(1).Rows(2).Cells(1)
+    y = myCell.Range.Text
+    yy = myCell.Range.Paragraphs.Count
+    pr1 = ActiveDocument.Tables(1).Rows(2).Range.Paragraphs(2).Range.Text
+    
     x = ActiveDocument.Paragraphs(3).Style
     x1 = ActiveDocument.Paragraphs(3).Range.Text
     x2 = ActiveDocument.Paragraphs(3).Parent
@@ -22,8 +28,9 @@ Sub Test2()
     
 '    ActiveDocument.Content.
     
-    Debug.Print x
-    Debug.Print x1, x3
+    Debug.Print y
+    Debug.Print yy, pr1
+'    Debug.Print x1, x3
 '    ActiveDocument.Content.Bold = True
 End Sub
 
@@ -162,12 +169,29 @@ End Sub
 
 
 Public Sub mainStart()
-'    Dim myTable As Table
-    
-    
+    ' ïðîâåðêà êîë-âà òàáëèö â ôàéëå
+    Debug.Print "Íàçâàíèå ôàéëà: ", ActiveDocument.Name
     Debug.Print "Êîë-âî òàáëèö = ", ActiveDocument.Tables.Count
-   
-'    For Each myTable In ActiveDocument.Tables.
+    
+    Selection.Find.ClearFormatting
+    Selection.Find.Replacement.ClearFormatting
+    With Selection.Find
+        .Text = ";"
+        .Replacement.Text = "."
+        .Forward = True
+        .Wrap = wdFindContinue
+        .Format = False
+        .MatchCase = False
+        .MatchWholeWord = False
+        .MatchWildcards = False
+        .MatchSoundsLike = False
+        .MatchAllWordForms = False
+    End With
+    Selection.Find.Execute Replace:=wdReplaceAll
+    
+    ' ïðîâåðêà ìàêñèìàëüíîãî øðèôòà
+    Call findMaxFontSize
+
 End Sub
 
 
@@ -252,7 +276,7 @@ Sub startParseTable()
                                 
                             End If
                             sortingQuestion = sortingTitle + 100
-                            testMyString = chapterParseFunction(id, sortingTitle, myParagraph)
+                            testMyString = chapterParseFunction(id, sortingTitle, myParagraph, myParagraphs)
                             i = LBound(data) + UBound(data)
                             ReDim Preserve data(i + 1)
                             data(i + 1) = testMyString
@@ -301,6 +325,8 @@ Sub startParseTable()
     Next ii
     
     Call writeToFile(data)
+    
+    Debug.Print "Êîíåö âûïîëíåíèÿ "
 
 
 End Sub
@@ -321,17 +347,24 @@ Sub chapterParse(id As Long, sorting As Long, myParagraph As Paragraph)
 
 End Sub
 
-Function chapterParseFunction(id As Long, sorting As Long, myParagraph As String) As String
+Function chapterParseFunction(id As Long, sorting As Long, myParagraph As String, myParagraphs) As String
     Dim myString As String, myText As String
+    Dim desc As String
+    Debug.Print "Çàãîëîâîê", myParagraphs.Count
 '    myText = myParagraph.Range.Text
-    myText = myParagraph
-    
+    myText = myParagraphs(1).Range.Text
+    desc = "None"
     myText = Replace(Replace(myText, Chr(10), ""), Chr(13), ". ")
     myText = Left(myText, Len(myText) - 1)
     myText = Replace(myText, "..", ".")
-    
+    If myParagraphs.Count > 1 Then
+        desc = myParagraphs(2).Range.Text
+        desc = Replace(Replace(desc, Chr(10), ""), Chr(13), ". ")
+        desc = Left(desc, Len(desc) - 1)
+        desc = Replace(desc, "..", ".")
+    End If
 '    chapterParseFunction = CStr(id) + ";" + "title" + ";" + CStr(sorting) + ";" + myText + ";" + "null"
-    chapterParseFunction = ";" + "title" + ";" + CStr(sorting) + ";" + myText + ";" + "null" + ";" + "No" + ";" + "NoRelation" + ";" + "Null"
+    chapterParseFunction = ";" + "title" + ";" + CStr(sorting) + ";" + myText + ";" + desc + ";" + "No" + ";" + "NoRelation" + ";" + "None"
 
 End Function
 
@@ -349,11 +382,13 @@ Function questionParseFunction(id As Long, sorting1 As Long, myParagraph As Stri
     indicatorSubQuestion = currentRow.Cells(1).Range.Text
     indicatorSubQuestion = Replace(Replace(indicatorSubQuestion, Chr(10), ""), Chr(13), "")
     indicatorSubQuestion = Left(indicatorSubQuestion, Len(indicatorSubQuestion) - 1)
+    
     If currentRow.Cells.Count = 4 Then
         maxScore = currentRow.Cells(4).Range.Text
         maxScore = Replace(Replace(maxScore, Chr(10), ""), Chr(13), "")
         maxScore = Left(maxScore, Len(maxScore) - 1)
     End If
+    
 '    indicatorSubQuestion = Left(indicatorSubQuestion, 1)
 '    Debug.Print indicatorSubQuestion
     If indicatorSubQuestion = "" Then
@@ -362,7 +397,7 @@ Function questionParseFunction(id As Long, sorting1 As Long, myParagraph As Stri
         sorting1 = sorting1 - 100 + 20
         relationSubQuestion = sorting1 - 20
     End If
-'    Debug.Print sorting1
+    Debug.Print "Ïàðñèòñÿ âîïðîñ", myParagraphs.Count
 '    Debug.Print indicatorSubQuestion
 '    Debug.Print myParagraphs.Count
     
@@ -400,34 +435,181 @@ End Function
 
 Function answerParseFunction(id As Long, sorting As Long, myParagraph As String) As String
     Dim myString As String, myText As String
+'    Debug.Print "Îòâåò"
 '    myText = myParagraph.Range.Text
     myText = myParagraph
     
-    myText = Replace(Replace(myText, Chr(10), ""), Chr(13), ". ")
+    myText = Replace(Replace(myText, Chr(10), ""), Chr(13), "")
+    myText = Replace(myText, Chr(8), " ")
+    myText = Replace(myText, Chr(9), " ")
+'    myText = Replace(myText, Chr(2), "")
+'    myText = Replace(myText, Chr(3), "")
+'    myText = Replace(myText, Chr(4), "")
+'    myText = Replace(myText, Chr(5), "")
+'    myText = Replace(myText, Chr(6), "")
+'    myText = Replace(myText, Chr(7), "")
+    For ii = 0 To 30
+        myText = Replace(myText, Chr(ii), " ")
+    Next ii
+    myText = Replace(myText, Chr(160), Chr(32))
+'    myText = Replace(myText, "", "")
     myText = Left(myText, Len(myText) - 1)
-    myText = Replace(myText, "..", ".")
+    myText = Replace(myText, "..", "")
     
-    answerParseFunction = ";" + "answer" + ";" + CStr(sorting) + ";" + myText + ";" + "null" + ";" + "No" + ";" + "NoRelation" + ";" + "Null"
+    answerParseFunction = ";" + "answer" + ";" + CStr(sorting) + ";" + myText + ";" + "None" + ";" + "No" + ";" + "NoRelation" + ";" + "None"
 
 End Function
 
 Sub testFill()
     Dim MyResult As Long
+    Dim MyChar
+    MyChar = Chr(160)
     Debug.Print ActiveDocument.Tables(1).Rows(1).Range.Paragraphs(1).Range.Words(1).HighlightColorIndex
     MyResult = (3200 \ 1000 + 1) * 1000
     Debug.Print MyResult
+    Debug.Print MyChar
 End Sub
 
 Sub writeToFile(data As Variant)
 
     i = LBound(data) + UBound(data)
-    Open "C:\Users\Abdyushev.R\Documents\VB_word\parse_table\wordData.txt" For Output As #1
+    
+    Open "C:\Users\Abdyushev.R\Documents\VB_word\parse_table\wordData1.txt" For Output As #1
         For ii = 0 To i
             Write #1, data(ii)
-            
         Next ii
-'        Write #1, x2, "Hello world"
-'        Write #1, x5, " view"
     Close #1
 
+End Sub
+Sub findFont()
+    Dim maxFontSize As Long, rowIndex As Long, flag As Long
+    Dim myText As String
+    Dim x1 As String
+    Dim celTable As Cell
+    Dim rowTable As Row
+    Dim myParagraph As Paragraph
+    Dim trimParagraph As Paragraph
+   
+    maxFontSize = 0
+    rowIndex = 0
+   
+    For Each rowTable In ActiveDocument.Tables(1).Rows
+        For Each celTable In rowTable.Cells
+            For Each myParagraph In celTable.Range.Paragraphs
+'                Set trimParagraph = myParagraph.Range.Words(1)
+                If maxFontSize < myParagraph.Range.Words(1).Characters(1).Font.Size Then
+                    maxFontSize = myParagraph.Range.Words(1).Characters(1).Font.Size
+                    rowIndex = rowTable.Index
+                    myText = myParagraph.Range.Text
+                End If
+            Next myParagraph
+        Next celTable
+'        Debug.Print rowTable.Index
+    Next rowTable
+    
+    If ActiveDocument.Tables(1).Rows(rowIndex).Range.Paragraphs(1).Range.Words(1).Characters(1).Font.ColorIndex = -1 Then flag = 100
+'    ActiveDocument.Tables(1).Rows(rowIndex).Range.Paragraphs(1).Range.Words(1).Characters(1).Font.Fill.Visible
+'    flag = ActiveDocument.Tables(1).Rows(rowIndex).Range.Paragraphs(1).Range.Words(1).Characters(1).Font.Fill
+    Debug.Print "Ìàêñèìàëüíûé øðèôò = ", maxFontSize, rowIndex, myText, flag
+
+
+End Sub
+
+Sub anotherParse()
+    Dim maxFontSize As Long, rowIndex As Long, flag As Long
+    Dim id As Long, sortingTitle As Long, sortingQuestion As Long
+    Dim myText As String
+    Dim x1 As String
+    Dim celTable As Cell
+    Dim rowTable As Row
+    Dim myParagraph As String
+    Dim trimParagraph As Paragraphs
+    Dim textPart As Words
+    Dim data As Variant, d As Variant
+    Dim testMyString As String
+    Dim indexCell As Integer
+    
+    data = Array()
+    id = 1
+    sortingTitle = 0
+    sortingQuestion = 0
+    
+    For Each rowTable In ActiveDocument.Tables(1).Rows
+        If rowTable.Index > 1 Then
+            indexCell = 0
+            For Each celTable In rowTable.Cells
+                indexCell = indexCell + 1
+
+'                For Each myParagraph In celTable.Range.Paragraphs
+                    myParagraph = celTable.Range.Text
+                    Set myParagraphs = celTable.Range.Paragraphs
+                    If rowTable.Cells.Count = 1 Then
+                    
+                        ' Ïàðñèì íàçâàíèå ðàçäåëà
+'                        Set myParagraphs = celTable.Range.Paragraphs
+                        
+                        If myParagraphs(1).Range.Words(1).Characters(1).Font.Bold = -1 And myParagraphs(1).Range.Words(1).Characters(1).Font.Size > 9 Then
+                            sortingTitle = sortingTitle + 1000
+                            
+                            If sortingQuestion >= sortingTitle Then
+                                sortingTitle = (sortingQuestion \ 1000 + 1) * 1000
+                                
+                            End If
+                            sortingQuestion = sortingTitle + 100
+                            testMyString = chapterParseFunction(id, sortingTitle, myParagraph, myParagraphs)
+                            i = LBound(data) + UBound(data)
+                            ReDim Preserve data(i + 1)
+                            data(i + 1) = testMyString
+'                            Debug.Print testMyString, indexCell
+
+                        End If
+                    Else
+                        If indexCell = 1 Then
+                            
+                            ' Ïàðñèì âîïðîñ
+                            If indexCell = 1 Then
+                                sortingQuestion = sortingQuestion + 100
+                                testMyString = questionParseFunction(id, sortingQuestion, myParagraph, myParagraphs, rowTable)
+                                i = LBound(data) + UBound(data)
+                                ReDim Preserve data(i + 1)
+                                data(i + 1) = testMyString
+                            End If
+                            
+                            
+                        Else
+                            ' Ïàðñèì îòâåò
+                            If indexCell = 2 Then
+                                
+'                                sortingQuestion = sortingQuestion + 50
+                                testMyString = answerParseFunction(id, 8, myParagraph)
+                                i = LBound(data) + UBound(data)
+                                ReDim Preserve data(i + 1)
+                                data(i + 1) = testMyString
+                            End If
+                            
+                        End If
+                        
+                    End If
+                    
+'                Next myParagraph
+            id = id + 1
+            Next celTable
+        End If
+        
+
+'        sortingQuestion = sortingTitle + 50
+    Next rowTable
+    
+    i = LBound(data) + UBound(data)
+    
+'    Debug.Print "Ðàçìåð ìàññèâà = ", i + 1, data(1)
+    
+    For ii = 0 To i
+        data(ii) = CStr(ii) + data(ii)
+'        Debug.Print ii, data(ii)
+    Next ii
+    
+    Call writeToFile(data)
+    
+    Debug.Print "Êîíåö âûïîëíåíèÿ "
 End Sub
