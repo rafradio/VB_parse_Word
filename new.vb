@@ -183,9 +183,9 @@ End Sub
 
 
 Public Sub mainStart()
-    ' проверка кол-ва таблиц в файле
-    Debug.Print "Название файла: ", ActiveDocument.Name
-    Debug.Print "Кол-во таблиц = ", ActiveDocument.Tables.Count
+    ' ïðîâåðêà êîë-âà òàáëèö â ôàéëå
+    Debug.Print "Íàçâàíèå ôàéëà: ", ActiveDocument.Name
+    Debug.Print "Êîë-âî òàáëèö = ", ActiveDocument.Tables.Count
     
     Selection.Find.ClearFormatting
     Selection.Find.Replacement.ClearFormatting
@@ -203,7 +203,7 @@ Public Sub mainStart()
     End With
     Selection.Find.Execute Replace:=wdReplaceAll
     
-    ' проверка максимального шрифта
+    ' ïðîâåðêà ìàêñèìàëüíîãî øðèôòà
     Call findMaxFontSize
 
 End Sub
@@ -238,7 +238,7 @@ Sub findMaxFontSize()
     If ActiveDocument.Tables(1).Rows(rowIndex).Range.Paragraphs(1).Range.Words(1).Characters(1).Font.ColorIndex = -1 Then flag = 100
 '    ActiveDocument.Tables(1).Rows(rowIndex).Range.Paragraphs(1).Range.Words(1).Characters(1).Font.Fill.Visible
 '    flag = ActiveDocument.Tables(1).Rows(rowIndex).Range.Paragraphs(1).Range.Words(1).Characters(1).Font.Fill
-    Debug.Print "Максимальный шрифт = ", maxFontSize, rowIndex, myText, flag
+    Debug.Print "Ìàêñèìàëüíûé øðèôò = ", maxFontSize, rowIndex, myText, flag
 
 End Sub
 
@@ -280,7 +280,7 @@ Sub startParseTable()
                     Set myParagraphs = celTable.Range.Paragraphs
                     If rowTable.Cells.Count = 1 Then
                     
-                        ' Парсим название раздела
+                        ' Ïàðñèì íàçâàíèå ðàçäåëà
 '                        Set myParagraphs = celTable.Range.Paragraphs
                         If myParagraphs(1).Range.Words(1).Characters(1).Font.Bold = -1 And myParagraphs(1).Range.Words(1).Characters(1).Font.Size = 12 Then
                             sortingTitle = sortingTitle + 1000
@@ -299,7 +299,7 @@ Sub startParseTable()
                         End If
                     Else
                         If indexCell > 1 Then
-                            ' Парсим вопрос
+                            ' Ïàðñèì âîïðîñ
                             If indexCell = 2 Then
                                 sortingQuestion = sortingQuestion + 100
                                 testMyString = questionParseFunction(id, sortingQuestion, myParagraph, myParagraphs, rowTable)
@@ -308,7 +308,7 @@ Sub startParseTable()
                                 data(i + 1) = testMyString
                             End If
                             
-                            ' Парсим ответ
+                            ' Ïàðñèì îòâåò
                             If indexCell = 3 Then
 '                                sortingQuestion = sortingQuestion + 50
                                 testMyString = answerParseFunction(id, 8, myParagraph)
@@ -331,7 +331,7 @@ Sub startParseTable()
     
     i = LBound(data) + UBound(data)
     
-'    Debug.Print "Размер массива = ", i + 1, data(1)
+'    Debug.Print "Ðàçìåð ìàññèâà = ", i + 1, data(1)
     
     For ii = 0 To i
         data(ii) = CStr(ii) + data(ii)
@@ -340,7 +340,7 @@ Sub startParseTable()
     
     Call writeToFile(data)
     
-    Debug.Print "Конец выполнения "
+    Debug.Print "Êîíåö âûïîëíåíèÿ "
 
 
 End Sub
@@ -364,16 +364,16 @@ End Sub
 Function chapterParseFunction(id As Long, sorting As Long, myParagraph As String, myParagraphs) As String
     Dim myString As String, myText As String
     Dim desc As String
-    Debug.Print "Заголовок", myParagraphs.Count
+    Debug.Print "Çàãîëîâîê", myParagraphs.Count
 '    myText = myParagraph.Range.Text
     myText = myParagraphs(1).Range.Text
     desc = "None"
-    myText = Replace(Replace(myText, Chr(10), ""), Chr(13), ". ")
+    myText = Replace(Replace(myText, Chr(10), ""), Chr(13), "")
     myText = Left(myText, Len(myText) - 1)
     myText = Replace(myText, "..", ".")
     If myParagraphs.Count > 1 Then
         desc = myParagraphs(2).Range.Text
-        desc = Replace(Replace(desc, Chr(10), ""), Chr(13), ". ")
+        desc = Replace(Replace(desc, Chr(10), ""), Chr(13), "")
         desc = Left(desc, Len(desc) - 1)
         desc = Replace(desc, "..", ".")
     End If
@@ -401,6 +401,9 @@ Function questionParseFunction(id As Long, sorting1 As Long, myParagraph As Stri
         maxScore = currentRow.Cells(4).Range.Text
         maxScore = Replace(Replace(maxScore, Chr(10), ""), Chr(13), "")
         maxScore = Left(maxScore, Len(maxScore) - 1)
+        If maxScore = "" Then
+            maxScore = "None"
+        End If
     End If
     
 '    indicatorSubQuestion = Left(indicatorSubQuestion, 1)
@@ -411,7 +414,7 @@ Function questionParseFunction(id As Long, sorting1 As Long, myParagraph As Stri
         sorting1 = sorting1 - 100 + 20
         relationSubQuestion = sorting1 - 20
     End If
-    Debug.Print "Парсится вопрос", myParagraphs.Count
+    Debug.Print "Ïàðñèòñÿ âîïðîñ", myParagraphs.Count
 '    Debug.Print indicatorSubQuestion
 '    Debug.Print myParagraphs.Count
     
@@ -450,7 +453,7 @@ End Function
 Function answerParseFunction(id As Long, sorting As Long, myParagraph As String) As String
     Dim myString As String, myText As String
     Dim sMatch As Boolean
-'    Debug.Print "Ответ"
+'    Debug.Print "Îòâåò"
 '    myText = myParagraph.Range.Text
     myText = myParagraph
     
@@ -465,14 +468,15 @@ Function answerParseFunction(id As Long, sorting As Long, myParagraph As String)
 '    myText = Replace(myText, "", "")
     myText = Left(myText, Len(myText) - 1)
     myText = Replace(myText, "..", "")
-    If myText <> " " Then
-        answerParseFunction = ";" + "answer" + ";" + CStr(sorting) + ";" + myText + ";" + "None" + ";" + "No" + ";" + "NoRelation" + ";" + "None"
-    Else
-        sMatch = LCase(myText) Like "?[a-z]"
-        Debug.Print "Ответ", sMatch, myText
-        answerParseFunction = ""
-    
-    End If
+    answerParseFunction = ";" + "answer" + ";" + CStr(sorting) + ";" + myText + ";" + "None" + ";" + "No" + ";" + "NoRelation" + ";" + "None"
+'    If myText <> "" And myText <> " " Then
+'        answerParseFunction = ";" + "answer" + ";" + CStr(sorting) + ";" + myText + ";" + "None" + ";" + "No" + ";" + "NoRelation" + ";" + "None"
+'    Else
+'        sMatch = LCase(myText) Like "?[a-z]"
+'        Debug.Print "Îòâåò", sMatch, myText
+'        answerParseFunction = ""
+'
+'    End If
     
     
 '    answerParseFunction = ";" + "answer" + ";" + CStr(sorting) + ";" + myText + ";" + "None" + ";" + "No" + ";" + "NoRelation" + ";" + "None"
@@ -532,7 +536,7 @@ Sub findFont()
     If ActiveDocument.Tables(1).Rows(rowIndex).Range.Paragraphs(1).Range.Words(1).Characters(1).Font.ColorIndex = -1 Then flag = 100
 '    ActiveDocument.Tables(1).Rows(rowIndex).Range.Paragraphs(1).Range.Words(1).Characters(1).Font.Fill.Visible
 '    flag = ActiveDocument.Tables(1).Rows(rowIndex).Range.Paragraphs(1).Range.Words(1).Characters(1).Font.Fill
-    Debug.Print "Максимальный шрифт = ", maxFontSize, rowIndex, myText, flag
+    Debug.Print "Ìàêñèìàëüíûé øðèôò = ", maxFontSize, rowIndex, myText, flag
 
 
 End Sub
@@ -567,7 +571,7 @@ Sub anotherParse()
                     Set myParagraphs = celTable.Range.Paragraphs
                     If rowTable.Cells.Count = 1 Then
                     
-                        ' Парсим название раздела
+                        ' Ïàðñèì íàçâàíèå ðàçäåëà
 '                        Set myParagraphs = celTable.Range.Paragraphs
                         
                         If myParagraphs(1).Range.Words(1).Characters(1).Font.Bold = -1 And myParagraphs(1).Range.Words(1).Characters(1).Font.Size > 9 Then
@@ -588,7 +592,7 @@ Sub anotherParse()
                     Else
                         If indexCell = 1 Then
                             
-                            ' Парсим вопрос
+                            ' Ïàðñèì âîïðîñ
                             If indexCell = 1 Then
                                 sortingQuestion = sortingQuestion + 100
                                 testMyString = questionParseFunction(id, sortingQuestion, myParagraph, myParagraphs, rowTable)
@@ -599,7 +603,7 @@ Sub anotherParse()
                             
                             
                         Else
-                            ' Парсим ответ
+                            ' Ïàðñèì îòâåò
                             If indexCell = 2 Then
                                 
 '                                sortingQuestion = sortingQuestion + 50
@@ -626,7 +630,7 @@ Sub anotherParse()
     
     i = LBound(data) + UBound(data)
     
-'    Debug.Print "Размер массива = ", i + 1, data(1)
+'    Debug.Print "Ðàçìåð ìàññèâà = ", i + 1, data(1)
     
     For ii = 0 To i
         data(ii) = CStr(ii) + data(ii)
@@ -635,13 +639,13 @@ Sub anotherParse()
     
     Call writeToFile(data)
     
-    Debug.Print "Конец выполнения "
+    Debug.Print "Êîíåö âûïîëíåíèÿ "
 End Sub
 
 Sub RemoveRed()
-    Dim maxFontSize As Long, rowIndex As Long, flag As Long
+    Dim maxFontSize As Long, rowIndex As Long, flag As Long, indexWord As Long
     Dim id As Long, sortingTitle As Long, sortingQuestion As Long
-    Dim myText As String
+    Dim myText As String, leftPart As String, rightPart As String, textMy As String
     Dim x1 As String
     Dim celTable As Cell
     Dim rowTable As Row
@@ -658,12 +662,25 @@ Sub RemoveRed()
             For Each celTable In rowTable.Cells
                 indexCell = indexCell + 1
                 For Each paragraphMy In celTable.Range.Paragraphs
+                    indexWord = 0
+                    
                     For Each wordMy In paragraphMy.Range.Words
+                        indexWord = indexWord + 1
+                        If indexCell = 3 And indexWord = 1 Then
+                            leftPart = Left(paragraphMy.Range.Words(1), 1)
+                            rightPart = Right(paragraphMy.Range.Words(1), Len(paragraphMy.Range.Words(1)) - 1)
+                            If leftPart = "-" Then
+                                textMy = rightPart
+                                wordMy.Text = "( ) " + textMy
+                            End If
+                            
+                        End If
+                        
                         If wordMy.HighlightColorIndex = 6 Then
                             Debug.Print wordMy.HighlightColorIndex, wordMy.Text
                             wordMy.Text = ""
                         End If
- '                       Debug.Print wordMy.HighlightColorIndex
+ '
                     Next wordMy
                 Next paragraphMy
 
@@ -671,5 +688,5 @@ Sub RemoveRed()
         End If
         
     Next rowTable
-
+    Debug.Print "Êîíåö ïðîãðàììû"
 End Sub
